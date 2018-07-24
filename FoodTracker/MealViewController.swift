@@ -7,19 +7,26 @@
 //
 
 import UIKit
+import os.log
 
-class ViewController: UIViewController, UITextFieldDelegate,
+class MealViewController: UIViewController, UITextFieldDelegate,
     UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     //MARK: Properties
 
-    @IBOutlet weak var mealNameLabel: UILabel!
     @IBOutlet weak var mealNameEdit: UITextField!
     @IBOutlet weak var photoImageView: UIImageView!
+    
+    @IBOutlet weak var ratingControl: RatingControl!
+    @IBOutlet weak var saveButton: UIBarButtonItem!
+    
+    
+    var meal: Meal?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         mealNameEdit.delegate = self
+        updateSaveButtonState()
     }
 
     override func didReceiveMemoryWarning() {
@@ -27,7 +34,18 @@ class ViewController: UIViewController, UITextFieldDelegate,
         // Dispose of any resources that can be recreated.
     }
     
+    //MARK: PrivateMethods
+    
+    private func updateSaveButtonState(){
+        let text = mealNameEdit.text ?? ""
+        saveButton.isEnabled = !text.isEmpty
+    }
+    
     //MARK: UITextFieldDeleate
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        saveButton.isEnabled = false
+    }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
@@ -35,7 +53,8 @@ class ViewController: UIViewController, UITextFieldDelegate,
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        mealNameLabel.text = textField.text
+        updateSaveButtonState()
+        navigationItem.title = textField.text
     }
     
     //MARK: UIImagePickControllerDelegate
@@ -64,6 +83,29 @@ class ViewController: UIViewController, UITextFieldDelegate,
         imagePickController.delegate = self
         present(imagePickController, animated: true, completion: nil)
         
+        
+    }
+    
+    //MARK: Navigation
+    
+    
+    @IBAction func cancel(_ sender: UIBarButtonItem) {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        super.prepare(for: segue, sender: sender)
+        
+        guard let button = sender as? UIBarButtonItem, button === saveButton else {
+            os_log("The save button was not pressed, canceling", log: OSLog.default, type: .debug)
+            return
+        }
+        
+        let name = mealNameEdit.text ?? ""
+        let photo = photoImageView.image
+        let rating = ratingControl.rating
+        
+        meal = Meal(name: name, photo: photo, rating: rating)
         
     }
 }
